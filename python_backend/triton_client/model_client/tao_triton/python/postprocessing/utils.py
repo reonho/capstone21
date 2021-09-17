@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 def pool_context(*args, **kwargs):
     """Simple wrapper to get pool context with close function."""
     pool = Pool(*args, **kwargs)
-    try:
+    try:    
         yield pool
     finally:
         pool.terminate()
@@ -138,6 +138,24 @@ def render_image(frame, image_wise_bboxes, output_image_file, box_color, linewid
                 draw.rectangle(box, outline=outline_color)
     image.save(output_image_file)
 
+def return_bbox_info(frame, image_wise_bboxes):
+    """Returns final Bbox with file name"""
+    final_annotations = []
+    for annotations in image_wise_bboxes: #Looping through all bboxes detected in the image
+        class_name = annotations.category
+        box = annotations.box
+        if (box[2] - box[0]) >= 0 and (box[3] - box[1]) >= 0:
+            x1 = max(0, box[0])
+            y1 = max(0, box[1])
+            x2 = min(frame.width, box[2])
+            y2 = min(frame.height, box[3])
+            confidence_score = annotations.confidence
+            indv_bbox = {}
+            indv_bbox["bbox"] = [x1,y1,x2,y2]
+            indv_bbox["confidence_score"] = confidence_score
+            final_annotations.append(indv_bbox)
+    
+    return final_annotations
 
 def iou_vectorized(rects):
     """

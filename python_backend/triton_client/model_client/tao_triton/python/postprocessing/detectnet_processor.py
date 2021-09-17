@@ -35,7 +35,8 @@ from tao_triton.python.postprocessing.utils import (
     iou_vectorized,
     pool_context,
     render_image,
-    thresholded_indices
+    thresholded_indices,
+    return_bbox_info
 )
 from tao_triton.python.utils.kitti import write_kitti_annotation
 from PIL import Image
@@ -192,58 +193,66 @@ class DetectNetPostprocessor(Postprocessor):
             batchwise_boxes.append(imagewise_boxes)
 
         if render:
-            processes = []
             with pool_context(self.batch_size) as pool:
+                batch_boxes_output = []
                 for image_idx in range(self.batch_size):
                     current_idx = (this_id - 1) * self.batch_size + image_idx
                     if current_idx >= len(self.frames):
                         break
                     current_frame = self.frames[current_idx]
                     filename = os.path.basename(current_frame._image_path)
-                    output_label_file = os.path.join(
-                        self.output_path, "infer_labels",
-                        "{}.txt".format(os.path.splitext(filename)[0])
-                    )
-                    output_image_file = os.path.join(
-                        self.output_path, "infer_images",
-                        "{}.jpg".format(os.path.splitext(filename)[0])
-                    )
-                    if not os.path.exists(os.path.dirname(output_label_file)):
-                        os.makedirs(os.path.dirname(output_label_file))
-                    if not os.path.exists(os.path.dirname(output_image_file)):
-                        os.makedirs(os.path.dirname(output_image_file))
-                    processes.append(
-                        pool.apply_async(
-                            write_kitti_annotation, (output_label_file, batchwise_boxes[image_idx])
-                        )
-                    )
-                    processes.append(
-                        pool.apply_async(
-                            render_image,
-                            (current_frame, batchwise_boxes[image_idx],
-                             output_image_file, self.box_color,
-                             self.pproc_config.linewidth)
-                        )
-                    )
+                    #Returns BBOX of all license plates in it
+                    final_bboxes = return_bbox_info(current_frame, batchwise_boxes[image_idx])
+                    batch_boxes_output.append([final_bboxes, filename])
+                return batch_boxes_output
 
-                    #Saving cropped image in output_path/cropeed_images
-                    # output_cropped_file = os.path.join(
-                    #     self.output_path, "cropped_images",
+                    # output_label_file = os.path.join(
+                    #     self.output_path, "infer_labels",
+                    #     "{}.txt".format(os.path.splitext(filename)[0])
+                    # )
+                    # output_image_file = os.path.join(
+                    #     self.output_path, "infer_images",
                     #     "{}.jpg".format(os.path.splitext(filename)[0])
                     # )
+                    # if not os.path.exists(os.path.dirname(output_label_file)):
+                    #     os.makedirs(os.path.dirname(output_label_file))
+                    # if not os.path.exists(os.path.dirname(output_image_file)):
+                    #     os.makedirs(os.path.dirname(output_image_file))
+                    # processes.append(
+                    #     pool.apply_async(
+                    #         write_kitti_annotation, (output_label_file, batchwise_boxes[image_idx])
+                    #     )
+                    # )
+                    # processes.append(
+                    #     pool.apply_async(
+                    #         render_image,
+                    #         (current_frame, batchwise_boxes[image_idx],
+                    #          output_image_file, self.box_color,
+                    #          self.pproc_config.linewidth)
+                    #     )
+                    # )
 
-                    # if not os.path.exists(os.path.dirname(output_cropped_file)):
-                    #     os.makedirs(os.path.dirname(output_cropped_file))
+                    # # Saving cropped image in output_path/cropeed_images
+                    # # output_cropped_file = os.path.join(
+                    # #     self.output_path, "cropped_images",
+                    # #     "{}.jpg".format(os.path.splitext(filename)[0])
+                    # # )
 
-                    #Crops Image
-                    # image = Image.open(current_frame._image_path)
-                    # image = image.crop(mean_bbox)
-                    # image.save(output_cropped_file, 'JPEG')
+                    # # if not os.path.exists(os.path.dirname(output_cropped_file)):
+                    # #     os.makedirs(os.path.dirname(output_cropped_file))
 
-                    current_frame = self.frames[current_idx]
-                    filename = os.path.basename(current_frame._image_path)
-                    #Returns BBOX
-                    return (mean_bbox, filename)
+                    # # Crops Image
+                    # # image = Image.open(current_frame._image_path)
+                    # # image = image.crop(mean_bbox)
+                    # # image.save(output_cropped_file, 'JPEG')
 
-                for p in processes:
-                    p.wait()
+                    # processes.append(
+                    #     pool.apply_async(
+                    #         return_bbox,
+                    #         (current_frame, batchwise_boxes[image_idx])
+                    #     )
+                    # )
+
+
+                # for p in processes:
+                #     p.wait()

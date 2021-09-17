@@ -47,12 +47,12 @@ from tao_triton.python.model.classification_model import ClassificationModel
 logger = logging.getLogger(__name__)
 
 TRITON_MODEL_DICT = {
-    "classification": ClassificationModel,
+    # "classification": ClassificationModel,
     "detectnet_v2": DetectnetModel
 }
 
 POSTPROCESSOR_DICT = {
-    "classification": ClassificationPostprocessor,
+    # "classification": ClassificationPostprocessor,
     "detectnet_v2": DetectNetPostprocessor
 }
 
@@ -315,15 +315,20 @@ def lpd_predict(**FLAGS):
                 this_id = response.get_response().id
             else:
                 this_id = response.get_response()["id"]
-            final_image_bbox_response, file_name = postprocessor.apply(
+            batch_boxes_output = postprocessor.apply(
                 response, this_id, render=True
             )
+            
             processed_request += 1
             pbar.update(FLAGS['batch_size'])
 
-            final_image_bbox_response = list(final_image_bbox_response)
-            final_image_response = {"bbox": final_image_bbox_response, "file_name": file_name}
-            final_response.append(final_image_response)
+            for boxes in batch_boxes_output:
+                final_image_bbox_response, file_name = boxes
+                if len(final_image_bbox_response) != 0:
+                    final_image_response = {"HTTPStatus": 200, "file_name": file_name, "all_bboxes": final_image_bbox_response}
+                else:
+                    final_image_response = {"HTTPStatus": 204, "file_name": file_name, "all_bboxes": final_image_bbox_response}
+                final_response.append(final_image_response)
 
     return final_response
 
