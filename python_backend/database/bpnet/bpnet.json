@@ -5,6 +5,16 @@
   "email": "abc@stengineering.com",
   "phone": "12345678",
   "cover": "database/bpnet/cover.png",
+  "explainability_demo_api": {
+    "type": "POST",
+    "endpoint": "/api/bpnet/explain/internal",
+    "endpoint_display": "/api/bpnet/explain/<id>",
+    "status": "active",
+    "input": "Explain the prediction of your custom image. Explainability analysis will take some time.",
+    "input_type": "image",
+    "return_type": "json",
+    "return": "Explainability for the uploaded picture"
+  },
   "api": [
     {
       "type": "GET",

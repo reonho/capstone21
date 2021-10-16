@@ -118,10 +118,10 @@ class BodyPoseNetPostprocessor(Postprocessor):
                 # score for overall configuration
                 temp['score'] = person[-2].astype('float64')
                 temp['total'] = int(person[-1])  # total parts found
-
+                
                 results.append(temp)
 
-            batch_results[filename] = results
+            batch_results[filename] = {'results':results, 'paf':paf, 'heatmap':heatmap }
 
         return batch_results
 

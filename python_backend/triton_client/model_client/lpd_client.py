@@ -320,7 +320,7 @@ def lpd_predict(**FLAGS):
 
         '''
         Loops through the number of batches
-        '''
+        ''' 
 
         while processed_request < sent_count:
             response = responses[processed_request]
@@ -339,7 +339,6 @@ def lpd_predict(**FLAGS):
             '''
 
             for boxes in batch_boxes_output:
-                print(response)
                 final_image_bbox_response, file_name = boxes
                 if len(final_image_bbox_response) != 0:
                     final_image_response = {"HTTPStatus": 200, "file_name": file_name, "all_bboxes": final_image_bbox_response}

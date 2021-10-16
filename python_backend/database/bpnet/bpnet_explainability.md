@@ -12,6 +12,14 @@ We will explore these steps in the sections below.
 
 ## Backbone Network
 
+Given a base image below:
+
+![base](%placeholder1%)
+
 ## Confidence Maps and Part Affinity Fields
+
+![heatmap](%placeholder2%)
+
+%placeholder3%
 
 ## Multistage Refinement

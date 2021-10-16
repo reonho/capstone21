@@ -106,23 +106,41 @@ def plot_keypoints(results, image_filename, image_path, output_path, render_limb
                 canvas = cv.addWeighted(canvas, 0.4, cur_canvas, 0.6, 0)
     cv.imwrite(output_path, canvas)
 
+def segment_by_color(im_path, n): #
+    from skimage.segmentation import slic
+    from skimage.util import img_as_float
+    
+    img = cv.imread(im_path)
+    org = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+
+    segments = slic(img_as_float(org), n_segments=n, slic_zero=True)
+
+    return segments, org
+
 
 def chop_image(im_path, n): 
     """
     Chop image into n segments
     """
-    org = cv.imread(im_path)
+    # org = cv.imread(im_path)
    
-    im = org.copy()
-    M = im.shape[0]//n
-    N = im.shape[1]//n
-    tile_coord = [[x,x+M,y,y+N] for x in range(0,im.shape[0],M) for y in range(0,im.shape[1],N)]
-    response =[]
-    for i,matrix in enumerate(tile_coord):
-        a,b,c,d = matrix
-        ts = im.copy()
-        ts[a:b, c:d] = 0
-        response.append(ts)
+    # im = org.copy()
+    # M = im.shape[0]//n
+    # N = im.shape[1]//n
+    # tile_coord = [[x,x+M,y,y+N] for x in range(0,im.shape[0],M) for y in range(0,im.shape[1],N)]
+
+    segments, org = segment_by_color(im_path, n)
+    response = []
+    for v in np.unique(segments):
+        copy = org.copy()
+        copy[segments == v] = 0
+        response.append(copy)       
+        
+    # for i,matrix in enumerate(segments):
+    #     a,b,c,d = matrix
+    #     ts = im.copy()
+    #     ts[a:b, c:d] = 0
+    #     response.append(ts)
     return response
     
 def map_confidence_to_chunk(responses, filename):
@@ -139,29 +157,36 @@ def map_confidence_to_chunk(responses, filename):
 
 def color_chunks(original_image_path, conf, save_as, n=2):
     import matplotlib.pyplot as plt
-    org = cv.imread(original_image_path)
-    org = cv.cvtColor(org, cv.COLOR_BGR2RGB)
+    # org = cv.imread(original_image_path)
+    # org = cv.cvtColor(org, cv.COLOR_BGR2RGB)
+    # im = org.copy()
+    # M = im.shape[0]//n
+    # N = im.shape[1]//n
+    # tile_coord = [[x,x+M,y,y+N] for x in range(0,im.shape[0],M) for y in range(0,im.shape[1],N)]
+
+    segments, org = segment_by_color(original_image_path, n)
     im = org.copy()
-    M = im.shape[0]//n
-    N = im.shape[1]//n
-    tile_coord = [[x,x+M,y,y+N] for x in range(0,im.shape[0],M) for y in range(0,im.shape[1],N)]
     response =[]
     coef = get_coefficients(conf)
-    mean = sum(coef)/len(coef)
-    for i,matrix in enumerate(tile_coord):
-        a,b,c,d = matrix
-        color(im[a:b,c:d], i, coef, mean )
+    norm_coef = (coef - min(coef))/(max(coef)-min(coef))
+    
+    # print(mean, flush=True)
+    # for i,matrix in enumerate(tile_coord):
+    #     a,b,c,d = matrix
+    #     color(im[a:b,c:d], i, coef, mean )
+
+    for v in np.unique(segments):
+        im[segments == v] = color(norm_coef[v], coef[v])
+
         
     plt.imshow(org)
     plt.imshow(im, alpha=0.6)
     plt.savefig(save_as)
         
-def conf_color(x, max_v): 
-    return (max_v-x)*255/max_v     
+ 
 
 def draw_confidence_heat_map(responses, filename, save_as, n): 
     enforce_png_name = filename.split('/')[-1].split('.')[0] + '.png'
-    print(responses, flush=True)
     conf = map_confidence_to_chunk(responses,enforce_png_name) 
     color_chunks(filename, conf, save_as, n)
     
@@ -178,24 +203,16 @@ def get_coefficients(conf):
     
     return reg.coef_
 
-def color(matrix, i, coefs, mean):
-    coef=coefs[i]
-    for chunk in matrix: 
-        for pixel in chunk:
-            pixel[0] = 0
-            pixel[1] = 0
-            pixel[2] = 0
-            c, s = reg_color(coef, mean)
-            pixel[c] = s 
-         
-
-def reg_color(coef, mean):
-    if coef >= 0 :
+def color(norm, coef):
+    if coef > 0 :
         #red means coefficient is positive. adding it increases conf
-        return 0, abs(coef-mean)*255/mean
-    if coef < 0:
+        return norm*255, 0, 0
+    elif coef <= 0:
         #blue means coefficient is negative, adding it reduces conf
-        return 2, abs(coef-mean)*255/mean
+        return 0, 0, norm*255
+
+
+
 
 
 def replace_in_markdown(mapping, md_path):

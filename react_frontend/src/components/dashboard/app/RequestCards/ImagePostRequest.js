@@ -27,7 +27,7 @@ import { sendPostRequest, getImageUrl } from '../../../../API/component';
 // ----------------------------------------------------------------------
 const ImgStyle = styled('img')({
   top: 0,
-  maxWidth: '30vw',
+  width: '30vw',
   margin: '4%',
   marginLeft: '1%',
   alignItems: 'center',
@@ -132,7 +132,7 @@ export default function UploadPicture(props) {
               component="label"
               color="info"
               size="large"
-              disabled={!imgSrc}
+              disabled={!imgSrc || loading}
               onClick={() => {
                 setContent(undefined);
                 setLoading(true);

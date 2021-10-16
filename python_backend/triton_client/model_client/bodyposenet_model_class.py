@@ -33,7 +33,7 @@ class BodyPoseNetClass(BaseModelClass):
         else:
             return {'HTTPStatus': 200, 'status': 'Active'}
 
-    def predict(self, file_path):
+    def predict(self, file_path, return_tensor=False):
         """Runs inference on images in file_path if it exists
 
         Args:
@@ -46,12 +46,12 @@ class BodyPoseNetClass(BaseModelClass):
         """
 
         if os.path.exists(file_path):
-            return self._predict(file_path)
+            return self._predict(file_path, return_tensor=return_tensor)
         else:
             return {'HTTPStatus': 400,
                     'error': "File Path does not exist!"}
 
-    def _predict(self, file_path):
+    def _predict(self, file_path, return_tensor=False):
         number_files = len([name for name in os.listdir(
             file_path) if os.path.isfile(file_path+name)])
         if number_files < 256:
@@ -60,7 +60,7 @@ class BodyPoseNetClass(BaseModelClass):
             self._batch_size = 16
         return bodyposenet_predict(model_name=self._model_name, mode=self._mode, url=self._url,
                                    image_filename=file_path, output_path='./', verbose=False, streaming=False, async_set=False,
-                                   protocol='HTTP', model_version="", batch_size=self._batch_size)
+                                   protocol='HTTP', model_version="", batch_size=self._batch_size, return_tensor=return_tensor)
 
 
 if __name__ == '__main__':
