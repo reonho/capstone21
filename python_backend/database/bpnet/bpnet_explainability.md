@@ -1,4 +1,4 @@
-# Key Points
+## Key Points
 
 Human pose estimation is the computer vision task of estimating the configuration (‘the pose’) of the human body by localizing certain key points on a body within a video or a photo. This localization can be used downstream to predict if a person is standing, sitting, lying down, or doing some activity like dancing or jumping.
 
@@ -10,16 +10,20 @@ NVIDIA's BPNET is a fully convolutional model with architecture consisting of
 
 We will explore these steps in the sections below.
 
-## Backbone Network
+### Backbone Network
 
 Given a base image below:
 
 ![base](%placeholder1%)
 
-## Confidence Maps and Part Affinity Fields
+### Confidence Maps and Part Affinity Fields
 
 ![heatmap](%placeholder2%)
 
-%placeholder3%
+![paf](%placeholder3%)
 
-## Multistage Refinement
+### Multistage Refinement
+
+%placeholder4%
+
+![final_pred](%placeholder5%)
